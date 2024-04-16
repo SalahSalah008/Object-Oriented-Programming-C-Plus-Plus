@@ -1,6 +1,7 @@
 #include "RPG.h"
+#include <iostream> 
 
-RPG::RPG(){
+RPG::RPG() {
     name = "NPC";
     health = 100;
     strength = 10;
@@ -10,7 +11,7 @@ RPG::RPG(){
     skills[1] = "parry";
 }
 
-RPG::RPG(string name, int health, int strength, int defense, string type){
+RPG::RPG(string name, int health, int strength, int defense, string type) {
     this->name = name;
     this->health = health;
     this->strength = strength;
@@ -61,4 +62,23 @@ void RPG::updateHealth(int new_health) {
 
 bool RPG::isAlive() const {
     return health > 0;
+}
+
+void RPG::attack(RPG* opponent) {
+    int damage = strength - opponent->getDefense();
+    if (damage < 0) damage = 0;
+    int newHealth = opponent->getHealth() - damage;
+    opponent->updateHealth(newHealth);
+}
+
+void RPG::useSkill(RPG* opponent) {
+    for (int i = 0; i < SKILL_SIZE; i++) {
+        printf("Skill %i: %s\n", i, skills[i].c_str());
+    }
+    int chosen_skill_index;
+    cout << "Choose a skill to use: Enter 0 or 1\n";
+    cin >> chosen_skill_index;
+    string chosen_skill = skills[chosen_skill_index];
+    printAction(chosen_skill, *opponent);
+    attack(opponent);
 }
