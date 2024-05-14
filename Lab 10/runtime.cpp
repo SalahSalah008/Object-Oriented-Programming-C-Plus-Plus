@@ -39,37 +39,69 @@ void vecGen(string filename, vector<int> &v) {
     file.close();
 }
 
-int main() {
-    vector<int> v;
-    vecGen("100000_numbers.csv", v);
+void writeTimes(string filename, const vector<double> times, const vector<int> n) {
+    ofstream myFile(filename);
+    myFile << "Number of Elements (n)\t Time (sec) " << endl;
+    for(int i = 0; i < times.size(); i++) {
+        myFile << n[i] << "\t" << times[i] << "\n";
+    }
+    myFile.close();
+    cout << "Wrote to " << filename << endl;
+}
 
+double average(const vector<double>& a) {
+    double sum = 0.0;
+    for (double num : a) {
+        sum += num;
+    }
+    return sum / a.size();
+}
+
+int main() {
     vector<int> elem_to_find;
     vecGen("test_elem.csv", elem_to_find);
 
-    vector<double> iterative_times;
-    vector<double> binary_times;
+    vector<int> file_sizes;
+    vecGen("sizes.csv", file_sizes);
 
-    for (int i = 0; i < elem_to_find.size(); i++) {
-        int elem = elem_to_find[i];
-        clock_t start = clock();
-        iterativeSearch(v, elem);
-        clock_t end = clock();
-        iterative_times.push_back(double(end - start) / CLOCKS_PER_SEC);
+    vector<double> itimes, btimes;
+    vector<int> times_sizes;
+
+    for (int size : file_sizes) {
+        string filename = to_string(size) + "_numbers.csv";
+        vector<int> v;
+        vecGen(filename, v);
+
+        cout << filename << endl;
+
+        // Time iterative search
+        vector<double> times;
+        for (int elem : elem_to_find) {
+            clock_t start = clock();
+            iterativeSearch(v, elem);
+            clock_t end = clock();
+            times.push_back(double(end - start) / CLOCKS_PER_SEC);
+        }
+        double average_itime = average(times);
+        itimes.push_back(average_itime);
+        times.clear();
+
+        // Time binary search
+        sort(v.begin(), v.end());  // Sort the vector for binary search
+        for (int elem : elem_to_find) {
+            clock_t start = clock();
+            binarySearch(v, 0, v.size() - 1, elem);
+            clock_t end = clock();
+            times.push_back(double(end - start) / CLOCKS_PER_SEC);
+        }
+        double average_btime = average(times);
+        btimes.push_back(average_btime);
+
+        times_sizes.push_back(v.size());
     }
 
-    for (int i = 0; i < elem_to_find.size(); i++) {
-        int elem = elem_to_find[i];
-        clock_t start = clock();
-        binarySearch(v, 0, v.size() - 1, elem);
-        clock_t end = clock();
-        binary_times.push_back(double(end - start) / CLOCKS_PER_SEC);
-    }
-
-    double iterative_average = accumulate(iterative_times.begin(), iterative_times.end(), 0.0) / iterative_times.size();
-    double binary_average = accumulate(binary_times.begin(), binary_times.end(), 0.0) / binary_times.size();
-
-    cout << "Average time for iterative search: " << iterative_average << " sec" << endl;
-    cout << "Average time for binary search: " << binary_average << " sec" << endl;
+    writeTimes("iterativeSearch_times.csv", itimes, times_sizes);
+    writeTimes("binarySearch_times.csv", btimes, times_sizes);
 
     return 0;
 }
